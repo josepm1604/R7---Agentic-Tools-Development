@@ -6,3 +6,8 @@ pytest
 rank_bm25
 faiss-cpu
 pdfplumber
+langchain
+langchain-community
+langchain-chroma      
+langchain-huggingface 
+langchain-core
