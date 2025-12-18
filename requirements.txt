@@ -11,3 +11,8 @@ langchain-community
 langchain-chroma      
 langchain-huggingface 
 langchain-core
+lark
+llama-cpp-python
+pydantic
+rouge-score
+langgraph

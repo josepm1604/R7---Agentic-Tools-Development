@@ -5,86 +5,145 @@ from langchain_core.documents import Document
 
 
 def normalize_text(s: str) -> str:
+    """Limpia texto para comparaciones (quita tildes, mayúsculas)"""
     s = (s or "").lower()
     s = unicodedata.normalize("NFD", s)
     s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
-    s = re.sub(r"[^a-z0-9]+", " ", s)
     return s.strip()
 
 
-def like_code(s: str) -> bool:
-    s = (s or "").strip()
-    return bool(re.fullmatch(r"[A-Z]{2,4}[0-9A-Z]{2,4}", s))
+def clean_cell(text):
+    """Limpia saltos de linea y espacios extra de una celda"""
+    if not text:
+        return ""
+    return str(text).replace("\n", " ").strip()
 
 
 def parse_plan_estudio_uni_pdf(path: str, tag: str) -> List[Document]:
     docs: List[Document] = []
+
+    # ESTADO GLOBAL: Recordar en qué sección estamos mientras bajamos por el PDF
+    current_cycle = "Ciclo Desconocido"
+    current_type = "Obligatorio"  # Por defecto los ciclos numerados son obligatorios
+
+    print(f"Procesando PDF UNI: {os.path.basename(path)}...")
+
     with pdfplumber.open(path) as pdf:
-        current_section = "Desconocido"
-        for page_i, page in enumerate(pdf.pages, start=1):
-            tables = page.extract_tables() or []
+        for page_num, page in enumerate(pdf.pages, start=1):
+            tables = page.extract_tables()
+
+            if not tables:
+                continue
+
             for table in tables:
                 for row in table:
-                    clean_row = [
-                        str(c).replace("\n", " ").strip() if c else "" for c in row
-                    ]
+                    # Limpieza básica de la fila
+                    row = [clean_cell(c) for c in row]
 
-                    if not any(clean_row):
+                    # Filtramos filas vacías
+                    if not any(row):
                         continue
 
-                    row_norm = [normalize_text(c) for c in clean_row]
-                    first = row_norm[0] if row_norm else ""
+                    # Normalizamos la primera celda para detectar Cabeceras
+                    first_cell_norm = normalize_text(row[0])
 
-                    # Detectar cursos por ciclos
-                    if "ciclo" in first and "total" not in first:
-                        current_section = clean_row[0] or "Ciclo"
+                    # --- 1. DETECCIÓN DE CABECERAS (Cambio de Estado) ---
+
+                    # Caso: "Primer ciclo", "Segundo ciclo"...
+                    if "ciclo" in first_cell_norm and "total" not in first_cell_norm:
+                        current_cycle = row[0]  # Ej: "Primer ciclo"
+                        current_type = "Obligatorio"
+                        continue  # Saltamos la fila, solo actualizamos estado
+
+                    # Caso: "Cursos Electivos de Especialidad"
+                    if (
+                        "electivos" in first_cell_norm
+                        and "especialidad" in first_cell_norm
+                    ):
+                        current_cycle = "Electivos de Especialidad"
+                        current_type = "Electivo (Especialidad)"
                         continue
-                    if first in {"total", "totales"}:
+
+                    # Caso: "Cursos Electivos Complementarios"
+                    if (
+                        "electivos" in first_cell_norm
+                        and "complementarios" in first_cell_norm
+                    ):
+                        current_cycle = "Electivos Complementarios"
+                        current_type = "Electivo (Complementario)"
                         continue
 
-                    # Buscar código + nombre del curso al lado
-                    code_idx = None
-                    for i, celda in enumerate(clean_row):
-                        if like_code(celda):
-                            code_idx = i
-                            break
-                    if code_idx is None or code_idx + 1 >= len(clean_row):
+                    # Ignorar filas basura
+                    if (
+                        "nombre del curso" in first_cell_norm
+                        or "total" in first_cell_norm
+                    ):
                         continue
 
-                    codigo = clean_row[code_idx]
-                    nombre = clean_row[code_idx + 1]
+                    # --- 2. EXTRACCIÓN DEL CURSO ---
+                    # En tus tablas UNI: Col 0=Código, Col 1=Nombre, Col 8=Créditos, Col 10=Requisitos
+                    # Usamos índices seguros
 
+                    codigo = row[0]
+                    # Validación fuerte de código (Ej: BFI01, CC311)
+                    if len(codigo) < 4 or not any(c.isdigit() for c in codigo):
+                        continue
+
+                    nombre = row[1]
                     if not nombre:
                         continue
 
-                    # tipo de curso -> "Obligatorio", "Electivo", etc
-                    sec_norm = normalize_text(current_section)
-                    if "ciclo" in sec_norm:
-                        tipo = "Obligatorio"
-                        ciclo = current_section
-                    elif "especialidad" in sec_norm:
-                        tipo = "Electivo de Especialidad"
-                        ciclo = "Electivos"
-                    elif "complementarios" in sec_norm:
-                        tipo = "Electivo Complementario"
-                        ciclo = "Electivos"
-                    else:
-                        tipo = "Desconocido"
-                        ciclo = current_section
+                    # Créditos (buscamos en columnas típicas o por valor numérico)
+                    creditos = "N/A"
+                    # Heurística: buscar un número de 1 dígito entre columna 6 y 10
+                    for col_idx in range(6, len(row)):
+                        val = row[col_idx]
+                        if val.isdigit() and 1 <= int(val) <= 9:
+                            creditos = val
+                            break
 
-                    content = f"{tag} Curso: {nombre} ({codigo})"
-                    docs.append(
-                        Document(
-                            page_content=content,
-                            metadata={
-                                "universidad": tag,
-                                "codigo": codigo,
-                                "curso": nombre,
-                                "ciclo": ciclo,
-                                "tipo": tipo,
-                                "source": os.path.basename(path),
-                                "page": page_i,
-                            },
-                        )
+                    # Pre-requisitos (Usualmente la última o penúltima columna con texto)
+                    rrequisito = "Ninguno"
+                    for col_idx in range(len(row) - 1, 3, -1):
+                        val = str(row[col_idx])
+                        if not val or not val.strip():
+                            continue
+
+                        # CORRECCIÓN: Ignorar columnas que son nombres de archivo PDF
+                        if ".pdf" in val.lower() or "silabo" in val.lower():
+                            continue
+
+                        # Si encontramos algo que parece un requisito
+                        if "ninguno" in val.lower() or (
+                            any(c.isdigit() for c in val) and val[0].isupper()
+                        ):
+                            requisito = val
+                            break
+
+                    # --- 3. CONSTRUCCIÓN DEL TEXTO ENRIQUECIDO (La Magia) ---
+                    # Aquí creamos un párrafo que contiene TODA la info necesaria para el RAG.
+                    # Si el usuario busca "cursos primer ciclo", el match ocurrirá aquí.
+
+                    content = (
+                        f"Universidad: {tag}\n"
+                        f"Asignatura: {nombre}\n"
+                        f"Código: {codigo}\n"
+                        f"Ubicación: {current_cycle}\n"  # <--- INYECCIÓN DE CONTEXTO
+                        f"Tipo: {current_type}\n"
+                        f"Créditos: {creditos}\n"
+                        f"Pre-requisitos: {requisito}"
                     )
+
+                    # Metadatos para filtrado avanzado (opcional pero recomendado)
+                    metadata = {
+                        "source": os.path.basename(path),
+                        "page": page_num,
+                        "codigo": codigo,
+                        "ciclo": current_cycle,
+                        "tipo": current_type,
+                        "creditos": creditos,
+                    }
+
+                    docs.append(Document(page_content=content, metadata=metadata))
+
     return docs

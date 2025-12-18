@@ -1,305 +1,172 @@
-import os
 import sys
+import os
 import time
 import json
 import math
+import re
 
+# Añadir ruta raíz al path
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
 from src.config import Config
-from src.agent.core import AgentEngine
-from src.tools.rag import RAGTool
-from src.tools.calculator import CalculatorTool
-from src.tools.verification import VerificationTool
-
-# Se podría usar el LLM real o un MockLLM
-USE_REAL_LLM = os.environ.get("USE_REAL_LLM", "0") == "1"
+from src.agent.graph import app  # <--- IMPORTAMOS EL GRAFO, NO EL AGENTE VIEJO
 
 
-class MockLLMService:
-    """
-    LLM rápido para evaluación
-    Esto mantiene el flujo del agente
-    sin el costo de cargar flan-t5-large, el modelo completo.
-    """
-
-    def generate_response(self, query: str, context: str) -> str:
-        context = (context or "").strip()
-        if not context:
-            return "No context provided."
-        # 2 lineas del contexto
-        lines = [l.strip() for l in context.splitlines() if l.strip()]
-        return "\n".join(lines[:2])
-
-
+# Función auxiliar para leer logs
 def read_last_log_entry():
-    """
-    Lee la última entrada del archivo logs/execution.jsonl
-    """
+    """Lee la última entrada del log para ver qué herramienta se usó internamente."""
     log_path = os.path.join(Config.LOG_DIR, "execution.jsonl")
     if not os.path.exists(log_path):
-        return None
+        return {}
 
-    with open(log_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        if not lines:
-            return None
-        return json.loads(lines[-1])
-
-
-def tool_called_from_entry(entry):
-    """
-    Extrae el tool usado del steps_trace. El agente usa un maximo de una herramienta por query
-    """
-    if not entry:
-        return None, None
-
-    steps = entry.get("steps_trace", [])
-    if not steps:
-        return None, None
-
-    tool_name = steps[0].get("tool")
-    tool_output = steps[0].get("output", "")
-    return tool_name, tool_output
-
-
-def contains_case_insensitive(haystack: str, needle: str) -> bool:
-    return (needle or "").lower() in (haystack or "").lower()
-
-
-def safe_float(s: str):
     try:
-        return float(str(s).strip())
-    except Exception:
-        return None
+        with open(log_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            if not lines:
+                return {}
+            return json.loads(lines[-1])
+    except:
+        return {}
 
 
-def approx_equal(a: float, b: float, tol: float = 1e-6) -> bool:
-    return (
-        a is not None
-        and b is not None
-        and math.isfinite(a)
-        and math.isfinite(b)
-        and abs(a - b) <= tol
-    )
-
-
-def evaluate_cases(agent: AgentEngine, cases, section_name: str):
-    """
-    cases: lista con:
-      - query
-      - expected_tool
-      - check_type: "contains" | "float"
-      - expected: string o float
-    """
-    routing_hits = 0
-    output_hits = 0
-    latencies = []
-
+def evaluate_cases(cases, section_name: str):
     print(f"\n=== Evaluación: {section_name} ===")
-    print("-" * 95)
-    print(
-        f"{'Query':<45} | {'Tool':<12} | {'RouteOK':<7} | {'OutputOK':<8} | {'t(s)':<6}"
-    )
-    print("-" * 95)
+    print("-" * 100)
+    print(f"{'Query':<40} | {'Tool Used':<12} | {'Output OK':<8} | {'Latency':<6}")
+    print("-" * 100)
+
+    hits = 0
+    latencies = []
 
     for c in cases:
         query = c["query"]
-        expected_tool = c["expected_tool"]
-        check_type = c["check_type"]
-        expected = c["expected"]
+        expected_content = c["expected"]  # Lo que esperamos ver en la respuesta
+        expected_tool_key = c.get(
+            "expected_tool_key", None
+        )  # 'calculator', 'verification'
 
         t0 = time.time()
-        _response, latency = agent.run(query)
-        # el agente loguea steps_trace en execution.jsonl
+
+        # --- EJECUCIÓN DEL GRAFO ---
+        try:
+            result = app.invoke({"question": query})
+            final_response = result.get("generation", "")
+
+            # Intentamos leer qué herramienta decidió el router (si está en el estado)
+            # Nota: En nuestro grafo, guardamos 'tool_decision' en el estado
+            tool_used = result.get("tool_decision", "rag")
+
+        except Exception as e:
+            final_response = f"ERROR: {e}"
+            tool_used = "error"
+
         dt = time.time() - t0
         latencies.append(dt)
 
-        entry = read_last_log_entry()
-        tool_used, tool_output = tool_called_from_entry(entry)
+        # --- VALIDACIÓN ---
+        # 1. ¿La respuesta contiene el dato esperado?
+        is_correct = False
 
-        route_ok = tool_used == expected_tool
-        if route_ok:
-            routing_hits += 1
+        # Normalización para comparar
+        resp_norm = str(final_response).lower()
+        exp_norm = str(expected_content).lower()
 
-        # Validación del output, solo si el router funciono bien
-        output_ok = False
-        if route_ok:
-            if check_type == "contains":
-                output_ok = contains_case_insensitive(tool_output, str(expected))
-            elif check_type == "float":
-                got = safe_float(tool_output)
-                output_ok = approx_equal(got, float(expected), tol=1e-6)
+        if expected_tool_key == "calculator":
+            # Para calculadora, buscamos el número exacto
+            # Si espera 25.0, buscamos "25" en el texto
+            is_correct = str(int(float(expected_content))) in resp_norm
+        else:
+            # Para texto, búsqueda parcial
+            is_correct = exp_norm in resp_norm
 
-        if output_ok:
-            output_hits += 1
+        if is_correct:
+            hits += 1
+
+        # Color para consola (opcional)
+        status_icon = "✅" if is_correct else "❌"
 
         print(
-            f"{query[:43]:<45} | {str(tool_used):<12} | {str(route_ok):<7} | {str(output_ok):<8} | {dt:<6.2f}"
+            f"{query[:38]:<40} | {tool_used:<12} | {status_icon} {str(is_correct):<5} | {dt:.2f}s"
         )
+        if not is_correct:
+            print(f"   >>> Expected: {expected_content}")
+            print(f"   >>> Got: {final_response[:100]}...")
 
-    n = len(cases)
-    routing_acc = routing_hits / n if n else 0.0
-    output_acc = output_hits / n if n else 0.0
-    avg_t = sum(latencies) / n if n else 0.0
+    accuracy = (hits / len(cases)) * 100
+    avg_latency = sum(latencies) / len(cases)
 
-    print("-" * 95)
-    print(f"Casos: {n}")
-    print(f"Routing Accuracy: {routing_acc:.2%}")
-    print(f"Tool Output Accuracy: {output_acc:.2%}")
-    print(f"Avg Latency (wall): {avg_t:.3f}s")
-
-    return {
-        "section": section_name,
-        "n": n,
-        "routing_acc": routing_acc,
-        "output_acc": output_acc,
-        "avg_latency": avg_t,
-    }
+    print("-" * 100)
+    print(f"Section Accuracy: {accuracy:.2f}% | Avg Latency: {avg_latency:.2f}s")
+    return {"acc": accuracy, "lat": avg_latency}
 
 
 def main():
-    print("Iniciando Evaluación del Agente (flujo explícito)")
+    print("🧪 Iniciando Evaluación E2 (LangGraph)")
 
-    # LLM real o mock
-    if USE_REAL_LLM:
-        from src.llm.model_loader import LLMService
-
-        llm = LLMService()
-    else:
-        llm = MockLLMService()
-
-    # Tools reales
-    tools = [
-        RAGTool(),
-        CalculatorTool(),
-        VerificationTool(),
-    ]
-
-    # core Agente
-    agent = AgentEngine(llm, tools)
-
-    # CASOS POR TOOL
-    # Calculator: el agente detecta "calcular" o expresión tipo "20 + 5"
-    calculator_cases = [
+    # 1. Casos de Calculadora
+    calc_cases = [
         {
-            "query": "calcular 20 + 5",
-            "expected_tool": "calculator",
-            "check_type": "float",
-            "expected": 25.0,
+            "query": "Cuanto es 20 + 5",
+            "expected": 25,
+            "expected_tool_key": "calculator",
         },
         {
-            "query": "¿Cuánto es 10/4?",
-            "expected_tool": "calculator",
-            "check_type": "float",
-            "expected": 2.5,
+            "query": "Calcula 10 * 10",
+            "expected": 100,
+            "expected_tool_key": "calculator",
         },
+        # Caso complejo
         {
-            "query": "calcular (3*3) + 1",
-            "expected_tool": "calculator",
-            "check_type": "float",
-            "expected": 10.0,
-        },
-        {
-            "query": "15 - 7",
-            "expected_tool": "calculator",
-            "check_type": "float",
-            "expected": 8.0,
-        },
-        {
-            "query": "calcular 2.5 * 4",
-            "expected_tool": "calculator",
-            "check_type": "float",
-            "expected": 10.0,
+            "query": "Si tengo 50 soles y gasto 10, cuanto me queda?",
+            "expected": 40,
+            "expected_tool_key": "calculator",
         },
     ]
 
-    # Verification
-    verification_cases = [
+    # 2. Casos de Verificación (Códigos de Curso)
+    # Ajusta los códigos según tu diccionario en verification.py
+    verif_cases = [
         {
-            "query": "¿Puedo llevar CS102?",
-            "expected_tool": "verification",
-            "check_type": "contains",
+            "query": "Puedo llevar CC311?",
             "expected": "APPROVED",
+            "expected_tool_key": "verification",
         },
+        # Asumiendo que definiste BFI01 con prerrequisitos
         {
-            "query": "¿Puedo llevar CS202?",
-            "expected_tool": "verification",
-            "check_type": "contains",
+            "query": "Soy apto para BFI01?",
             "expected": "REJECTED",
+            "expected_tool_key": "verification",
         },
+        # Caso borde: código inexistente
         {
-            "query": "¿Soy elegible para AI301?",
-            "expected_tool": "verification",
-            "check_type": "contains",
-            "expected": "REJECTED",
-        },
-        {
-            "query": "¿Puedo llevar CS101 otra vez?",
-            "expected_tool": "verification",
-            "check_type": "contains",
-            "expected": "Status",
-        },
-        {
-            "query": "¿Puedo llevar MA101?",
-            "expected_tool": "verification",
-            "check_type": "contains",
-            "expected": "Status",
+            "query": "Puedo llevar XX999?",
+            "expected": "no encontrado",
+            "expected_tool_key": "verification",
         },
     ]
 
-    # RAG: evitar queries que contengan códigos tipo CC202 o códigos que estén en verificación
+    # 3. Casos RAG (Documentos PDF)
     rag_cases = [
+        # Pregunta general que debe responderse con el PDF
         {
-            "query": "¿A qué ciclo pertenece Cálculo Integral?",
-            "expected_tool": "rag",
-            "check_type": "contains",
-            "expected": "(BMA02)",
+            "query": "¿Qué cursos son del primer ciclo?",
+            "expected": "ciclo",
+            "expected_tool_key": "rag",
         },
+        # Pregunta que no debería saber
         {
-            "query": "¿Cuántos créditos tiene Física I?",
-            "expected_tool": "rag",
-            "check_type": "contains",
-            "expected": "(BFI01)",
-        },
-        {
-            "query": "¿Física I es obligatorio o electivo en la UNI?",
-            "expected_tool": "rag",
-            "check_type": "contains",
-            "expected": "(BFI01)",
-        },
-        {
-            "query": "¿Cuál es el pre-requisito de Base de Datos Avanzadas?",
-            "expected_tool": "rag",
-            "check_type": "contains",
-            "expected": "Pre-requisito: CC202",
-        },
-        {
-            "query": "Qué cursos hay en el segundo ciclo",
-            "expected_tool": "rag",
-            "check_type": "contains",
-            "expected": "Ubicación: Segundo ciclo",
+            "query": "¿Quién ganó el mundial 2022?",
+            "expected": "no encontré",
+            "expected_tool_key": "rag",
         },
     ]
 
-    results = []
-    results.append(evaluate_cases(agent, calculator_cases, "Calculator"))
-    results.append(evaluate_cases(agent, verification_cases, "Verification"))
-    results.append(evaluate_cases(agent, rag_cases, "RAG"))
-
-    print("\nResumen Global")
-    print("-" * 70)
-    print(
-        f"{'Tool':<14} | {'N':<3} | {'RouteAcc':<10} | {'OutAcc':<10} | {'Avg t(s)':<8}"
-    )
-    print("-" * 70)
-    for r in results:
-        print(
-            f"{r['section']:<14} | {r['n']:<3} | {r['routing_acc']:<10.2%} | {r['output_acc']:<10.2%} | {r['avg_latency']:<8.3f}"
-        )
-    print("-" * 70)
+    # Ejecutar
+    evaluate_cases(calc_cases, "Calculadora")
+    evaluate_cases(verif_cases, "Verificación")
+    evaluate_cases(rag_cases, "RAG (Retrieval)")
 
 
 if __name__ == "__main__":

@@ -8,11 +8,20 @@ class VerificationTool(BaseTool):
 
         # Mock Database: Simulamos el catálogo de cursos y sus requisitos
         self.course_catalog = {
-            "CS101": {"name": "Introducción a CS", "prereqs": []},
+            "CS101": {
+                "name": "Introducción a Ciencia de la Computación",
+                "prereqs": [],
+            },
             "CS102": {"name": "Programación Orientada a Objetos", "prereqs": ["CS101"]},
-            "CS202": {"name": "Algoritmos", "prereqs": ["CS102", "MA101"]},
-            "MA101": {"name": "Cálculo I", "prereqs": []},
-            "AI301": {"name": "Inteligencia Artificial", "prereqs": ["CS202", "MA101"]},
+            "CS202": {
+                "name": "Analisis y Diseño de Algoritmos",
+                "prereqs": ["CS102", "MA101"],
+            },
+            "MA101": {"name": "Cálculo Integral", "prereqs": []},
+            "AI301": {
+                "name": "Procesamiento del Lenguaje Natural",
+                "prereqs": ["CS202", "MA101"],
+            },
         }
 
         # Cursos aprobados

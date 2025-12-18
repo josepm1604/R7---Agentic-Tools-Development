@@ -21,3 +21,5 @@ pytest.ini
 
 # vscode
 .vscode/
+
+models/

@@ -21,13 +21,13 @@ class RAGTool(BaseTool):
 
         self.documents = docs
         self.vectordb = build_load_index(self.documents, self.persist_dir)
-        self.retriever = build_hybrid_retriever(self.documents, self.vectordb, k=5)
+        self.retriever = build_hybrid_retriever(self.documents, self.vectordb, k=30)
 
     def extract_code(self, q: str):
         m = re.search(r"\b([A-Za-z]{2,4}[0-9A-Za-z]{2,4})\b", q or "")
         return m.group(1).upper() if m else None
 
-    def run(self, query: str, k=5):
+    def run(self, query: str, k=30):
         code = self.extract_code(query)
         if code:
             hits = [d for d in self.documents if d.metadata.get("codigo") == code]
