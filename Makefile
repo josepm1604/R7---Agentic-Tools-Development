@@ -30,6 +30,9 @@ run:
 	@echo "=== Ejecutando Agente ==="
 	$(PYTHON) -m src.main
 
+metrics:
+	$(PYTHON) -m src.utils.visualizer
+
 test:
 	@echo "=== Ejecutando Tests ==="
 	$(PYTEST) test/ -v
