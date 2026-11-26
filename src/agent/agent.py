@@ -1,5 +1,6 @@
 import time
 import re
+from functools import lru_cache
 from src.llm.model_loader import load_llm
 from src.tools.rag_setup import get_rag_tool
 from src.tools.calculator import CalculatorTool
@@ -14,7 +15,7 @@ Para responder, DEBES usar un formato de PENSAMIENTO, ACCIÓN y OBSERVACIÓN.
 Tus herramientas disponibles son:
 1. calculator: Úsalo para cálculos matemáticos. Input: expresión (ej: 20*4).
 2. verification: Úsalo para validar códigos de cursos (ej: CC102). Input: código.
-3. rag_search: Úsalo para buscar información de la universidad, cursos o malla. Input: texto de búsqueda.
+3. rag_search: Úsalo para buscar información de la universidad, cursos o malla. Input: el nombre del curso o tema (ej: Física I).
 
 Formato OBLIGATORIO:
 Question: la pregunta del usuario
@@ -26,8 +27,22 @@ Observation: resultado de la herramienta
 Thought: ya tengo la respuesta final
 Final Answer: la respuesta final al usuario
 
+Ejemplo:
+Question: Cuántos créditos tiene Cálculo II?
+Thought: debo buscar el curso en el plan de estudios.
+Action: rag_search
+Action Input: Cálculo II
+Observation: Asignatura: Cálculo II ... Créditos: 5
+Thought: ya tengo la respuesta final
+Final Answer: Cálculo II tiene 5 créditos.
+
 Comienza!
 """
+
+
+@lru_cache(maxsize=1)
+def _get_tools():
+    return CalculatorTool(), VerificationTool(), get_rag_tool()
 
 
 def run_agent(query: str):
@@ -45,19 +60,9 @@ def run_agent(query: str):
     guards = Guardrails()
     logger = AuditLogger()
 
-    # 2. Inicializar Herramientas
+    # 2. Herramientas (cacheadas: se construyen solo en la primera consulta)
     try:
-        print("   [DEBUG] Cargando Calculadora...", end=" ")
-        calc = CalculatorTool()
-        print(f"OK")
-
-        print("   [DEBUG] Cargando Verificación...", end=" ")
-        verif = VerificationTool()
-        print(f"OK")
-
-        print("   [DEBUG] Cargando RAG...", end=" ")
-        rag = get_rag_tool()
-        print(f"OK")
+        calc, verif, rag = _get_tools()
     except Exception as e:
         print(f"\n\n❌ ERROR AL CARGAR HERRAMIENTAS: {e}")
         raise e

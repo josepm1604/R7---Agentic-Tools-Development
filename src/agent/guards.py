@@ -16,9 +16,10 @@ class Guardrails:
 
     def check_and_track(self, tool_name):
         """Aplica límites de uso de herramientas (Requisito E2)."""
-        clean_name = tool_name.replace("rag_search", "rag")
-        if clean_name in self.tool_usage:
-            if self.tool_usage[clean_name] >= Config.MAX_TOOL_CALLS[clean_name]:
+        if "rag" in tool_name:
+            tool_name = "rag_search"
+        if tool_name in self.tool_usage:
+            if self.tool_usage[tool_name] >= Config.MAX_TOOL_CALLS[tool_name]:
                 return False
-            self.tool_usage[clean_name] += 1
+            self.tool_usage[tool_name] += 1
         return True

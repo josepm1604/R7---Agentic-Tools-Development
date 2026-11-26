@@ -1,9 +1,10 @@
 import os
-import sys
+from functools import lru_cache
 from langchain_community.llms import LlamaCpp
 from src.config import Config
 
 
+@lru_cache(maxsize=1)  # se carga una sola vez por proceso
 def load_llm():
     """Carga el modelo optimizado para CPU."""
     if not os.path.exists(Config.MODEL_PATH):
@@ -17,6 +18,7 @@ def load_llm():
         n_ctx=4096,
         n_threads=Config.CPU_NUM_THREADS,
         verbose=False,
-        repetition_penalty=1.2,
+        n_batch=512,
+        repeat_penalty=1.1,
         # CORRECCIÓN: Eliminamos 'stop' aquí para pasarlo dinámicamente en el agente
     )

@@ -95,8 +95,8 @@ def parse_plan_estudio_uni_pdf(path: str, tag: str) -> List[Document]:
 
                     # Créditos (buscamos en columnas típicas o por valor numérico)
                     creditos = "N/A"
-                    # Heurística: buscar un número de 1 dígito entre columna 6 y 10
-                    for col_idx in range(6, len(row)):
+                    # Col 8 = Créditos (col 6 es T.H. = horas totales, no créditos)
+                    for col_idx in range(8, len(row)):
                         val = row[col_idx]
                         if val.isdigit() and 1 <= int(val) <= 9:
                             creditos = val

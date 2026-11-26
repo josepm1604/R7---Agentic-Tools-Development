@@ -13,9 +13,9 @@ class Config:
     LLAMA_INDEX_DIR = os.path.join(INDEX_DIR, "llama_index")
 
     # --- MODELO (CPU) ---
-    MODEL_NAME = "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+    MODEL_NAME = "qwen2.5-3b-instruct-q4_k_m.gguf"
     MODEL_PATH = os.path.join(MODELS_DIR, MODEL_NAME)
-    CPU_NUM_THREADS = 4
+    CPU_NUM_THREADS = os.cpu_count() or 4
 
     # --- AGENTE & SEGURIDAD (E2) ---
     MAX_ITERATIONS = 8  # Evita bucles infinitos (ReAct loop)

@@ -1,4 +1,6 @@
 import os
+import re
+import unicodedata
 from llama_index.core import (
     VectorStoreIndex,
     StorageContext,
@@ -47,8 +49,26 @@ def get_rag_tool():
         storage_context = StorageContext.from_defaults(persist_dir=persist_dir)
         index = load_index_from_storage(storage_context, embed_model=embed_model)
 
+    def _norm(s):
+        return "".join(
+            c for c in unicodedata.normalize("NFD", s.lower()) if not unicodedata.combining(c)
+        )
+
+    # nombre de curso normalizado -> texto del chunk (el embedding en inglés falla con nombres)
+    by_name = {}
+    for node in index.docstore.docs.values():
+        m = re.search(r"Asignatura:\s*(.+)", node.get_content())
+        if m:
+            by_name[_norm(m.group(1).strip())] = node.get_content()
+
     class LlamaIndexDynamicTool:
         def run(self, query: str):
+            qn = _norm(query)
+            # el nombre más largo gana ("fisica computacional" antes que "fisica i")
+            hits = sorted((n for n in by_name if re.search(rf"\b{re.escape(n)}\b", qn)), key=len)
+            if hits:
+                return by_name[hits[-1]][:2500]
+
             query_lower = query.lower()
             keywords_list = [
                 "lista",
@@ -61,7 +81,7 @@ def get_rag_tool():
             ]
 
             if any(k in query_lower for k in keywords_list):
-                dynamic_k = 15
+                dynamic_k = 8
                 print(f"   [RAG Strategy] Detectado modo LISTA -> k={dynamic_k}")
             else:
                 dynamic_k = 3
@@ -69,7 +89,8 @@ def get_rag_tool():
 
             query_engine = index.as_query_engine(similarity_top_k=dynamic_k)
             response = query_engine.query(query)
-            return str(response)
+            # shortcut: corte duro por caracteres, usar reranking si se pierde información
+            return str(response)[:2500]
 
     print("✅ Listo.")
     return LlamaIndexDynamicTool()
