@@ -30,7 +30,7 @@ def load_llm() -> Llama:
         raise FileNotFoundError(f"No existe el modelo en: {Config.MODEL_PATH}")
 
     return Llama(
-        model_path=Config.MODEL_PATH,
+        model_path=str(Config.MODEL_PATH),
         n_ctx=4096,
         n_threads=Config.CPU_NUM_THREADS,
         n_batch=512,
