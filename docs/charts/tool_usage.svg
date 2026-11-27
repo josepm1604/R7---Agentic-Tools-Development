@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="180" viewBox="0 0 680 180">
+<rect width="100%" height="100%" fill="#ffffff" rx="8"/>
+<text x="20" y="32" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">Uso de herramientas (audit_traces.jsonl)</text>
+<text x="180" y="72" text-anchor="end" font-family="sans-serif" font-size="12" fill="#334155">rag_search</text>
+<rect x="190" y="58" width="410.0" height="20" rx="4" fill="#2563eb"/>
+<text x="608.0" y="72" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">25</text>
+<text x="180" y="106" text-anchor="end" font-family="sans-serif" font-size="12" fill="#334155">calculator</text>
+<rect x="190" y="92" width="164.0" height="20" rx="4" fill="#2563eb"/>
+<text x="362.0" y="106" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">10</text>
+<text x="180" y="140" text-anchor="end" font-family="sans-serif" font-size="12" fill="#334155">plan_prereq</text>
+<rect x="190" y="126" width="82.0" height="20" rx="4" fill="#2563eb"/>
+<text x="280.0" y="140" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">5</text>
+</svg>

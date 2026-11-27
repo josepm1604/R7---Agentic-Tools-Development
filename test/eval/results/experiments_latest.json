@@ -1,0 +1,62 @@
+{
+  "fuzzy_cutoff_sweep": [
+    {
+      "fuzzy_cutoff": 0.65,
+      "passed": 11,
+      "total": 11
+    },
+    {
+      "fuzzy_cutoff": 0.75,
+      "passed": 11,
+      "total": 11
+    },
+    {
+      "fuzzy_cutoff": 0.85,
+      "passed": 11,
+      "total": 11
+    },
+    {
+      "fuzzy_cutoff": 0.95,
+      "passed": 11,
+      "total": 11
+    }
+  ],
+  "hybrid_rrf_comparison": [
+    {
+      "mode": "Solo Vector",
+      "passed": 3,
+      "total": 4
+    },
+    {
+      "mode": "Híbrido (Vector+RRF)",
+      "passed": 4,
+      "total": 4
+    }
+  ],
+  "k_recall_sweep": [
+    {
+      "k": 1,
+      "passed": 2,
+      "total": 4,
+      "avg_chars": 156
+    },
+    {
+      "k": 3,
+      "passed": 4,
+      "total": 4,
+      "avg_chars": 489
+    },
+    {
+      "k": 5,
+      "passed": 4,
+      "total": 4,
+      "avg_chars": 802
+    },
+    {
+      "k": 8,
+      "passed": 4,
+      "total": 4,
+      "avg_chars": 1314
+    }
+  ]
+}

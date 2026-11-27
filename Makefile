@@ -12,7 +12,7 @@ PYTEST = $(PYTHON) -m pytest
 
 # Scripts de evaluación
 
-.PHONY: all install run test eval eval-agent-real golden clean docker-build docker-run setup
+.PHONY: all install run test eval eval-agent-real experiments golden clean docker-build docker-run setup
 
 all: install run
 
@@ -42,6 +42,10 @@ eval:
 # Eval: agente completo con el LLM real (minutos)
 eval-agent-real:
 	$(PYTHON) -m test.eval.run_eval
+
+# Experimentos paramétricos (fuzzy_cutoff, RRF, k)
+experiments:
+	$(PYTHON) -m test.eval.run_experiments
 
 # Regenerar el golden set desde el PDF
 golden:
