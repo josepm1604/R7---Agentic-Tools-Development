@@ -1,0 +1,297 @@
+[
+  {
+    "id": "credits-CM035",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Construcción Numérica-Diseño Geométrico",
+    "tool": "rag_search",
+    "tool_input": "Construcción Numérica-Diseño Geométrico",
+    "expect_all": [
+      "\\b5\\b"
+    ]
+  },
+  {
+    "id": "credits-YA100",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Ayudantía Académica I",
+    "tool": "rag_search",
+    "tool_input": "Ayudantía Académica I",
+    "expect_all": [
+      "\\b1\\b"
+    ]
+  },
+  {
+    "id": "credits-CM0D9",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Optimización Estocástica",
+    "tool": "rag_search",
+    "tool_input": "Optimización Estocástica",
+    "expect_all": [
+      "\\b5\\b"
+    ]
+  },
+  {
+    "id": "credits-CM055",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Métodos Numéricos de Optimización II",
+    "tool": "rag_search",
+    "tool_input": "Métodos Numéricos de Optimización II",
+    "expect_all": [
+      "\\b5\\b"
+    ]
+  },
+  {
+    "id": "credits-CC0E1",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Programación en Tarjetas Gráficas",
+    "tool": "rag_search",
+    "tool_input": "Programación en Tarjetas Gráficas",
+    "expect_all": [
+      "\\b4\\b"
+    ]
+  },
+  {
+    "id": "credits-BMA02",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Cálculo Integral",
+    "tool": "rag_search",
+    "tool_input": "Cálculo Integral",
+    "expect_all": [
+      "\\b5\\b"
+    ]
+  },
+  {
+    "id": "credits-CC411",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Seguridad en Sistemas Informáticos",
+    "tool": "rag_search",
+    "tool_input": "Seguridad en Sistemas Informáticos",
+    "expect_all": [
+      "\\b4\\b"
+    ]
+  },
+  {
+    "id": "credits-CF3E1",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Circuitos Electrónicos Analógicos",
+    "tool": "rag_search",
+    "tool_input": "Circuitos Electrónicos Analógicos",
+    "expect_all": [
+      "\\b4\\b"
+    ]
+  },
+  {
+    "id": "credits-CC0B4",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Núcleo y Redes para Computación Paralela",
+    "tool": "rag_search",
+    "tool_input": "Núcleo y Redes para Computación Paralela",
+    "expect_all": [
+      "\\b4\\b"
+    ]
+  },
+  {
+    "id": "credits-CC0B1",
+    "category": "credits",
+    "query": "Cuántos créditos tiene el curso Sistemas Operativos Avanzados",
+    "tool": "rag_search",
+    "tool_input": "Sistemas Operativos Avanzados",
+    "expect_all": [
+      "\\b4\\b"
+    ]
+  },
+  {
+    "id": "prereq-CC0C3",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Algoritmos Bioinspirados",
+    "tool": "plan_prereq",
+    "tool_input": "Algoritmos Bioinspirados",
+    "expect_all": [
+      "programacion\\ evolutiva"
+    ]
+  },
+  {
+    "id": "prereq-CF1B2",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Física II",
+    "tool": "plan_prereq",
+    "tool_input": "Física II",
+    "expect_all": [
+      "fisica\\ i"
+    ]
+  },
+  {
+    "id": "prereq-CC0F2",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Física Computacional",
+    "tool": "plan_prereq",
+    "tool_input": "Física Computacional",
+    "expect_all": [
+      "matematica\\ computacional"
+    ]
+  },
+  {
+    "id": "prereq-CC0F8",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Introducción a la Computación Cuántica",
+    "tool": "plan_prereq",
+    "tool_input": "Introducción a la Computación Cuántica",
+    "expect_all": [
+      "matematica\\ computacional",
+      "introduccion\\ a\\ la\\ electricidad\\ y\\ magnetismo"
+    ]
+  },
+  {
+    "id": "prereq-CC0A7",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Sistemas Embebidos en Tiempo Real",
+    "tool": "plan_prereq",
+    "tool_input": "Sistemas Embebidos en Tiempo Real",
+    "expect_all": [
+      "programacion\\ concurrente\\ y\\ distribuida"
+    ]
+  },
+  {
+    "id": "prereq-CM4H1",
+    "category": "prereq",
+    "query": "Cuáles son los prerrequisitos de Teoría de la Probabilidad",
+    "tool": "plan_prereq",
+    "tool_input": "Teoría de la Probabilidad",
+    "expect_all": [
+      "estadistica\\ inferencial"
+    ]
+  },
+  {
+    "id": "cycle-1",
+    "category": "cycle",
+    "query": "Qué cursos hay en el primer ciclo",
+    "tool": "plan_ciclo",
+    "tool_input": "Primer ciclo",
+    "expect_all": [
+      "fisica\\ i",
+      "introduccion\\ a\\ la\\ computacion",
+      "calculo\\ diferencial",
+      "algebra\\ lineal",
+      "quimica\\ i"
+    ]
+  },
+  {
+    "id": "cycle-2",
+    "category": "cycle",
+    "query": "Qué cursos hay en el segundo ciclo",
+    "tool": "plan_ciclo",
+    "tool_input": "Segundo ciclo",
+    "expect_all": [
+      "calculo\\ integral",
+      "redaccion\\ y\\ comunicacion",
+      "ingles\\ i",
+      "algebra\\ lineal\\ i",
+      "fundamentos\\ de\\ programacion",
+      "calculo\\ de\\ probabilidades"
+    ]
+  },
+  {
+    "id": "cycle-3",
+    "category": "cycle",
+    "query": "Qué cursos hay en el tercer ciclo",
+    "tool": "plan_ciclo",
+    "tool_input": "Tercer ciclo",
+    "expect_all": [
+      "calculo\\ diferencial\\ e\\ integral\\ avanzado",
+      "matematica\\ discreta",
+      "programacion\\ orientada\\ a\\ objetos",
+      "arquitectura\\ de\\ computadores",
+      "estadistica\\ inferencial"
+    ]
+  },
+  {
+    "id": "cycle-4",
+    "category": "cycle",
+    "query": "Qué cursos hay en el cuarto ciclo",
+    "tool": "plan_ciclo",
+    "tool_input": "Cuarto ciclo",
+    "expect_all": [
+      "economia\\ general",
+      "base\\ de\\ datos",
+      "sistemas\\ operativos",
+      "algoritmos\\ y\\ estructuras\\ de\\ datos",
+      "introduccion\\ a\\ la\\ electricidad\\ y\\ magnetismo",
+      "idioma\\ extranjero\\ o\\ lengua\\ nativa\\ en\\ el\\ nivel\\ intermedio"
+    ]
+  },
+  {
+    "id": "calc-84",
+    "category": "calc",
+    "query": "Cuánto es 12*7",
+    "tool": "calculator",
+    "tool_input": "Cuánto es 12*7",
+    "expect_all": [
+      "\\b84\\b"
+    ]
+  },
+  {
+    "id": "calc-25",
+    "category": "calc",
+    "query": "Calcular 100/4",
+    "tool": "calculator",
+    "tool_input": "Calcular 100/4",
+    "expect_all": [
+      "\\b25\\b"
+    ]
+  },
+  {
+    "id": "calc-42",
+    "category": "calc",
+    "query": "Cuánto es 15+27",
+    "tool": "calculator",
+    "tool_input": "Cuánto es 15+27",
+    "expect_all": [
+      "\\b42\\b"
+    ]
+  },
+  {
+    "id": "verif-approved",
+    "category": "verif",
+    "query": "Puedo matricularme en CF1B2?",
+    "tool": "verification",
+    "tool_input": "CF1B2",
+    "expect_all": [
+      "\\bapproved\\b",
+      "\\bcf1b2\\b"
+    ]
+  },
+  {
+    "id": "verif-rejected",
+    "category": "verif",
+    "query": "Puedo llevar CC0C3?",
+    "tool": "verification",
+    "tool_input": "CC0C3",
+    "expect_all": [
+      "\\brejected\\b",
+      "\\bcc521\\b"
+    ]
+  },
+  {
+    "id": "fuzzy-1",
+    "category": "credits",
+    "query": "Cuántos créditos tiene Calclo Integral",
+    "tool": "rag_search",
+    "tool_input": "Calclo Integral",
+    "expect_all": [
+      "\\b5\\b"
+    ]
+  },
+  {
+    "id": "unknown-1",
+    "category": "unknown",
+    "query": "Cuántos créditos tiene el curso Basket Subacuático",
+    "tool": "rag_search",
+    "tool_input": "Basket Subacuático",
+    "expect_all": [],
+    "expect_any": [
+      "no encuentro",
+      "no tengo",
+      "no se"
+    ],
+    "skip_tool_check": true
+  }
+]

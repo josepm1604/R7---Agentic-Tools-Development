@@ -1,19 +1,23 @@
+import logging
 import os
 import sys
-import time
-import traceback  # <--- NUEVO: Para ver el error real
+import traceback
 
-# Asegurar path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.config import Config
 from src.agent.agent import run_agent
 from src.agent.guards import Guardrails
+from src.config import Config
 
 
-def main():
+def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO if os.getenv("DEBUG") == "1" else logging.WARNING,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
     os.makedirs(Config.LOG_DIR, exist_ok=True)
     guards = Guardrails()
+    history: list[tuple[str, str]] = []
 
     print("\n" + "=" * 60)
     print(" 🤖 AGENTE UNI AUTÓNOMO (E2: ReAct Manual)")
@@ -28,25 +32,20 @@ def main():
                 print("👋 Hasta luego.")
                 break
 
-            # Guardrail de entrada
             valid, msg = guards.validate_input(query)
             if not valid:
                 print(f"🚫 {msg}")
                 continue
 
             print("⏳ Pensando...")
-
-            # Ejecutar Agente Manual
-            response = run_agent(query)
-
-            # Mostrar Respuesta
+            response = run_agent(query, history)
+            history.append((query, response))
             print(f"\nAgente> {response}")
 
-        except KeyboardInterrupt:
-            print("\n👋 Salida forzada.")
+        except (KeyboardInterrupt, EOFError):
+            print("\n👋 Salida limpia.")
             break
         except Exception:
-            # <--- NUEVO: Imprimir el error completo
             print("\n❌ ERROR CRÍTICO DETALLADO:")
             traceback.print_exc()
 

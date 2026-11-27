@@ -1,22 +1,29 @@
-# Dockerfile
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema necesarias para compilar ciertas libs
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  && rm -rf /var/lib/apt/lists/*
+# Dependencias del sistema para compilar llama-cpp-python si no hay wheel
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar el código fuente
+# Copiar código, datos e índice precomputado
 COPY src/ ./src/
 COPY data/ ./data/
+COPY indexes/ ./indexes/
 
-# Variables de entorno por defecto
+# Usuario no-root y directorio de logs
+RUN useradd -m -u 1000 appuser \
+    && mkdir -p /app/logs /app/models \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
 ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# Comando por defecto: Ejecutar el script principal
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "src.main"]

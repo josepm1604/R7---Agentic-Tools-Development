@@ -1,18 +1,20 @@
 # Project R7: Agentic Tools Workflow
 
-Este repositorio contiene la implementación del Entregable 1 (E1) para el proyecto de investigación Agentic Tools. El sistema consiste en un agente conversacional basado en `flan-t5-large` capaz de orquestar herramientas externas mediante un flujo de control explícito.
+Agente conversacional local sobre el plan de estudios 2018 de la UNI, capaz de orquestar herramientas externas (catálogo estructurado, RAG, verificación de matrícula y calculadora segura) mediante un bucle ReAct en CPU.
 
 ## Arquitectura del Sistema
 
-Para esta entrega (E1), el enrutamiento es determinista para establecer un baseline de rendimiento.
+Agente ReAct (Thought -> Action -> Observation) sobre el plan de estudios de la UNI, ejecutado en CPU.
 
-- **Core Engine**: Lógica de enrutamiento basada en reglas (Explicit Router) que decide qué herramienta invocar según el análisis léxico del prompt.
-- **LLM Backend**: `google/flan-t5-large` encargado de la síntesis de respuestas finales.
-- **Tools**:
-  - `CalculatorTool`: Motor aritmético seguro para cálculos precisos.
-  - `RAGTool`: Sistema de recuperación aumentada (Retrieval-Augmented Generation) utilizando FAISS y embeddings `all-MiniLM-L6-v2`.
-  - `VerificationTool`: Mock de API para consulta de requisitos académicos.g
-- **Observability**: Logging estructurado (JSONL) para auditoría de trazas (Thought -> Action -> Observation).
+- **LLM**: `qwen2.5-3b-instruct-q4_k_m.gguf` vía llama.cpp (descargar a `models/`). Una gramática GBNF (`USE_GRAMMAR=1`) fuerza el formato ReAct.
+- **Agente** (`src/agent/agent.py`): bucle ReAct manual, memoria de los últimos 3 turnos, guardrails y límites por herramienta (`guards.py`).
+- **Herramientas**:
+  - `rag_search`: LlamaIndex + embeddings `all-MiniLM-L6-v2`, con coincidencia exacta por nombre de curso.
+  - `plan_ciclo`: cursos de un ciclo y total de créditos (catálogo estructurado, sin LLM).
+  - `plan_prereq`: cadena completa de prerrequisitos.
+  - `calculator`: aritmética segura.
+  - `verification`: mock de elegibilidad de matrícula.
+- **Observabilidad**: trazas de auditoría en `logs/audit_traces.jsonl`.
 
 ## Instalación y Ejecución
 
@@ -48,22 +50,25 @@ make docker-run
 
 ## Uso de Agentes
 
-Para probar cada herramienta de forma independiente que usa el Agente
+Tests unitarios (parser del PDF, herramientas, guardrails):
 
 ```Bash
 make test
 ```
 
-Para probar todo el flujo del agente
+Harness de evaluación (golden set generado desde el PDF con `make golden`):
 
 ```Bash
-make eval-agent-real
+make eval              # solo herramientas, sin LLM (segundos)
+make eval-agent-real   # agente completo con el LLM real (minutos); guarda test/eval/results/*.json
 ```
+
+Para comparar sin gramática: `USE_GRAMMAR=0 make eval-agent-real`.
 
 ## Video de Ejecución
 
-El video está como formato txt en el que se puede encontrar el enlace al Drive para poder observarlo, está en la ruta principal como `video.txt`
+El enlace al video de ejecución se encuentra en `docs/video.txt`.
 
 ## Informe
 
-El informe del E1, está en formato pdf en la ruta principal como `Informe.pdf`
+El informe del E1 está en `docs/Informe.pdf`.

@@ -1,0 +1,141 @@
+{
+ "model": "qwen2.5-3b-instruct-q4_k_m.gguf",
+ "grammar": true,
+ "results": [
+  {
+   "id": "credits-CM035",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-YA100",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CM0D9",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CM055",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CC0E1",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-BMA02",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CC411",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CF3E1",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CC0B4",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "credits-CC0B1",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CC0C3",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CF1B2",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CC0F2",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CC0F8",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CC0A7",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "prereq-CM4H1",
+   "category": "prereq",
+   "tool_ok": true
+  },
+  {
+   "id": "cycle-1",
+   "category": "cycle",
+   "tool_ok": true
+  },
+  {
+   "id": "cycle-2",
+   "category": "cycle",
+   "tool_ok": true
+  },
+  {
+   "id": "cycle-3",
+   "category": "cycle",
+   "tool_ok": true
+  },
+  {
+   "id": "cycle-4",
+   "category": "cycle",
+   "tool_ok": true
+  },
+  {
+   "id": "calc-84",
+   "category": "calc",
+   "tool_ok": true
+  },
+  {
+   "id": "calc-25",
+   "category": "calc",
+   "tool_ok": true
+  },
+  {
+   "id": "calc-42",
+   "category": "calc",
+   "tool_ok": true
+  },
+  {
+   "id": "verif-approved",
+   "category": "verif",
+   "tool_ok": true
+  },
+  {
+   "id": "verif-rejected",
+   "category": "verif",
+   "tool_ok": true
+  },
+  {
+   "id": "fuzzy-1",
+   "category": "credits",
+   "tool_ok": true
+  },
+  {
+   "id": "unknown-1",
+   "category": "unknown",
+   "tool_ok": null
+  }
+ ]
+}

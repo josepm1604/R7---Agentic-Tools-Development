@@ -11,10 +11,8 @@ PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
 
 # Scripts de evaluación
-EVAL_RAG_SCRIPT = test/experiments/evaluate.py
-EVAL_AGENT_SCRIPT = test/experiments/evaluate_agent.py
 
-.PHONY: all install run test eval eval-agent eval-agent-real clean docker-build docker-run setup
+.PHONY: all install run test eval eval-agent-real golden clean docker-build docker-run setup
 
 all: install run
 
@@ -37,24 +35,17 @@ test:
 	@echo "=== Ejecutando Tests ==="
 	$(PYTEST) test/ -v
 
-# Eval: solo RAG (Recall@k / MRR)
-eval: install
-	@echo "=== Ejecutando Evaluación RAG (Recall@k / MRR) ==="
-	$(PYTHON) $(EVAL_RAG_SCRIPT)
+# Eval: herramientas sin LLM (segundos)
+eval:
+	$(PYTHON) -m test.eval.run_eval --no-llm
 
-# Eval: agente completo (router + tools + latencia) usando MockLLM 
-eval-agent: install
-	@echo "=== Ejecutando Evaluación del Agente (MockLLM) ==="
-	$(PYTHON) $(EVAL_AGENT_SCRIPT)
+# Eval: agente completo con el LLM real (minutos)
+eval-agent-real:
+	$(PYTHON) -m test.eval.run_eval
 
-# Eval: agente completo usando el LLM real 
-eval-agent-real: install
-	@echo "=== Ejecutando Evaluación del Agente (LLM real) ==="
-ifeq ($(OS),Windows_NT)
-	powershell -NoProfile -ExecutionPolicy Bypass -Command "$$env:USE_REAL_LLM='1'; & '$(PYTHON)' '$(EVAL_AGENT_SCRIPT)'"
-else
-	USE_REAL_LLM=1 $(PYTHON) $(EVAL_AGENT_SCRIPT)
-endif
+# Regenerar el golden set desde el PDF
+golden:
+	$(PYTHON) test/eval/build_golden.py
 
 clean:
 	@echo "=== Limpiando archivos temporales ==="
@@ -73,4 +64,4 @@ docker-build:
 	docker build -t $(IMAGE_NAME) .
 
 docker-run:
-	docker run -v $(PWD)/logs:/app/logs $(IMAGE_NAME)
+	docker run --rm -it -v $(PWD)/logs:/app/logs -v $(PWD)/models:/app/models:ro $(IMAGE_NAME)

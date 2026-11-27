@@ -1,7 +1,13 @@
+from dataclasses import dataclass
 import os, re, unicodedata
 import pdfplumber
-from typing import List
-from langchain_core.documents import Document
+from typing import Any, List
+
+
+@dataclass
+class Document:
+    page_content: str
+    metadata: dict[str, Any]
 
 
 def normalize_text(s: str) -> str:
@@ -103,7 +109,7 @@ def parse_plan_estudio_uni_pdf(path: str, tag: str) -> List[Document]:
                             break
 
                     # Pre-requisitos (Usualmente la última o penúltima columna con texto)
-                    rrequisito = "Ninguno"
+                    requisito = "Ninguno"
                     for col_idx in range(len(row) - 1, 3, -1):
                         val = str(row[col_idx])
                         if not val or not val.strip():

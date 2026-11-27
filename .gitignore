@@ -3,21 +3,25 @@ venv/
 env/
 .env
 
-# Bytecode de Python
+# Bytecode y empaquetado de Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+build/
+dist/
 
 # ChromaDB persistence storage
 chroma_db/
 
+# Logs de ejecución local
+logs/*.jsonl
+
 # Sistema operativo
 .DS_Store
 
-# test
-pytest.ini
-
 # cache
 .pytest_cache/
+.ruff_cache/
 
 # vscode
 .vscode/

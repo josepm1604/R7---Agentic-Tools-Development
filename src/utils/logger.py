@@ -1,23 +1,28 @@
+from datetime import datetime
 import json
 import os
-from datetime import datetime
+from typing import Any, Sequence
 from src.config import Config
 
 
 class AuditLogger:
-    def log_audit(self, query, steps, final_answer, latency):
+    def log_audit(
+        self,
+        query: str,
+        steps: Sequence[tuple[Any, str]],
+        final_answer: str,
+        latency: float,
+    ) -> None:
         os.makedirs(Config.LOG_DIR, exist_ok=True)
 
-        # Extraer trazas de las herramientas
         tool_trace = []
         for action, observation in steps:
             tool_trace.append(
                 {
                     "tool": action.tool,
                     "tool_input": action.tool_input,
-                    "log": action.log,  # El "Pensamiento" del modelo
-                    "observation": str(observation)[:200]
-                    + "...",  # Recortar para no llenar disco
+                    "log": action.log,
+                    "observation": str(observation)[:200] + "...",
                 }
             )
 
